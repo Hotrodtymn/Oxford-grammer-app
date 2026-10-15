@@ -2,10 +2,13 @@
 import { useRef } from 'react'
 import type { ChangeEvent, CSSProperties } from 'react'
 import type { WritingIssue } from './grammarChecker'
+import type { WritingStyleSuggestion } from '../style/styleChecker'
+
+type EditorHighlight = WritingIssue | WritingStyleSuggestion
 
 type HighlightedEditorProps = {
   value: string
-  issues: WritingIssue[]
+  issues: EditorHighlight[]
   onChange: (value: string) => void
   placeholder?: string
 }
@@ -31,7 +34,7 @@ export default function HighlightedEditor({
 
   const segments: {
     text: string
-    issue?: WritingIssue
+    issue?: EditorHighlight
   }[] = []
 
   const sortedIssues = [...issues]

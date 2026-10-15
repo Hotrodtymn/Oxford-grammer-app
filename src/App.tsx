@@ -1,14 +1,25 @@
 import { useMemo, useState } from "react";
 import { checkWriting } from "./features/grammar/grammarChecker";
 import type { WritingIssue } from "./features/grammar/grammarChecker";
+import { suggestWritingImprovements } from "./features/style/styleChecker";
+import type { WritingStyleSuggestion } from "./features/style/styleChecker";
 import "./App.css";
 import HighlightedEditor from "./features/grammar/HighlightedEditor";
 
 function App() {
   const [title, setTitle] = useState("Untitled document");
   const [content, setContent] = useState("");
+  const [dismissedStyleIds, setDismissedStyleIds] = useState<string[]>([]);
 
   const issues = useMemo(() => checkWriting(content), [content]);
+  const styleSuggestions = useMemo(
+    () => suggestWritingImprovements(content),
+    [content],
+  );
+  const visibleStyleSuggestions = styleSuggestions.filter(
+    (suggestion) => !dismissedStyleIds.includes(suggestion.id),
+  );
+  const highlights = [...issues, ...visibleStyleSuggestions];
 
   const words = content.trim() ? content.trim().split(/\s+/).length : 0;
 
@@ -25,6 +36,20 @@ function App() {
         current.slice(0, issue.start) +
         issue.suggestion +
         current.slice(issue.end)
+      );
+    });
+  };
+
+  const applyStyleSuggestion = (suggestion: WritingStyleSuggestion) => {
+    setContent((current) => {
+      if (current.slice(suggestion.start, suggestion.end) !== suggestion.original) {
+        return current;
+      }
+
+      return (
+        current.slice(0, suggestion.start) +
+        suggestion.suggestion +
+        current.slice(suggestion.end)
       );
     });
   };
@@ -79,7 +104,7 @@ function App() {
           <HighlightedEditor
             value={content}
             onChange={setContent}
-            issues={issues}
+            issues={highlights}
             placeholder={
               "Start writing here...\n\nPut your thoughts into words. Oxford will help you refine your writing."
             }
@@ -117,7 +142,7 @@ function App() {
             </p>
           ) : issues.length === 0 ? (
             <p className="suggestions-empty">
-              No issues found by Oxford's current basic checks.
+              No grammar or spelling issues found by Oxford's current checks.
             </p>
           ) : (
             <div className="suggestions-list">
@@ -149,6 +174,61 @@ function App() {
             </div>
           )}
         </section>
+
+        {content.trim().length > 0 && (
+          <section className="suggestions-panel style-suggestions-panel" aria-live="polite">
+            <div className="suggestions-heading">
+              <div>
+                <p className="eyebrow">OPTIONAL</p>
+                <h2>Writing improvements</h2>
+              </div>
+
+              <span className="issue-count">
+                {visibleStyleSuggestions.length}{" "}
+                {visibleStyleSuggestions.length === 1 ? "suggestion" : "suggestions"}
+              </span>
+            </div>
+
+            {visibleStyleSuggestions.length === 0 ? (
+              <p className="suggestions-empty">
+                No optional style suggestions right now.
+              </p>
+            ) : (
+              <div className="suggestions-list">
+                {visibleStyleSuggestions.map((suggestion) => (
+                  <article className="suggestion-item style-suggestion-item" key={suggestion.id}>
+                    <div className="suggestion-main">
+                      <span className="issue-type style">Optional style</span>
+                      <p className="suggestion-message">{suggestion.message}</p>
+                      <div className="suggestion-correction">
+                        <span className="original-text">{suggestion.original}</span>
+                        <span aria-hidden="true">→</span>
+                        <strong>{suggestion.suggestion}</strong>
+                      </div>
+                    </div>
+
+                    <div className="style-suggestion-actions">
+                      <button
+                        type="button"
+                        className="apply-suggestion"
+                        onClick={() => applyStyleSuggestion(suggestion)}
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        className="dismiss-suggestion"
+                        onClick={() => setDismissedStyleIds((ids) => [...ids, suggestion.id])}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
 
         <section className="next-feature">
           <div className="feature-icon" aria-hidden="true">

@@ -435,6 +435,42 @@
   color: #285ab5;
 }
 
+.issue-type.style {
+  background: #f0edff;
+  color: #6244bd;
+}
+
+.style-suggestions-panel {
+  border-color: #e6e0fb;
+}
+
+.style-suggestion-item {
+  background: #fcfbff;
+}
+
+.style-suggestion-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.dismiss-suggestion {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: white;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dismiss-suggestion:hover {
+  border-color: #c9c1e7;
+  color: var(--text-primary);
+}
+
 .suggestion-message {
   margin: 10px 0;
   color: var(--text-secondary);
@@ -575,6 +611,11 @@
 .writing-highlight.spelling {
   text-decoration-style: wavy;
   text-decoration-color: #5687ed;
+}
+
+.writing-highlight.style {
+  text-decoration-style: dotted;
+  text-decoration-color: #8068d8;
 }
 
 .highlight-placeholder {
