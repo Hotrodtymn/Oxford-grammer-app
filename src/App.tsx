@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
-import { checkWriting } from "./features/grammar/grammarChecker";
-import type { WritingIssue } from "./features/grammar/grammarChecker";
-import { suggestWritingImprovements } from "./features/style/styleChecker";
-import type { WritingStyleSuggestion } from "./features/style/styleChecker";
+import { analyzeWriting } from "./features/writing/localEngines";
+import type { WritingEngineSuggestion } from "./features/writing/engine";
 import "./App.css";
 import HighlightedEditor from "./features/grammar/HighlightedEditor";
 
@@ -11,13 +9,12 @@ function App() {
   const [content, setContent] = useState("");
   const [dismissedStyleIds, setDismissedStyleIds] = useState<string[]>([]);
 
-  const issues = useMemo(() => checkWriting(content), [content]);
-  const styleSuggestions = useMemo(
-    () => suggestWritingImprovements(content),
-    [content],
-  );
-  const visibleStyleSuggestions = styleSuggestions.filter(
-    (suggestion) => !dismissedStyleIds.includes(suggestion.id),
+  const suggestions = useMemo(() => analyzeWriting(content), [content]);
+  const issues = suggestions.filter((suggestion) => suggestion.type !== "style");
+  const visibleStyleSuggestions = suggestions.filter(
+    (suggestion) =>
+      suggestion.type === "style" &&
+      !dismissedStyleIds.includes(suggestion.id),
   );
   const highlights = [...issues, ...visibleStyleSuggestions];
 
@@ -25,7 +22,7 @@ function App() {
 
   const characters = content.length;
 
-  const applySuggestion = (issue: WritingIssue) => {
+  const applySuggestion = (issue: WritingEngineSuggestion) => {
     setContent((current) => {
       const actualText = current.slice(issue.start, issue.end);
 
@@ -36,20 +33,6 @@ function App() {
         current.slice(0, issue.start) +
         issue.suggestion +
         current.slice(issue.end)
-      );
-    });
-  };
-
-  const applyStyleSuggestion = (suggestion: WritingStyleSuggestion) => {
-    setContent((current) => {
-      if (current.slice(suggestion.start, suggestion.end) !== suggestion.original) {
-        return current;
-      }
-
-      return (
-        current.slice(0, suggestion.start) +
-        suggestion.suggestion +
-        current.slice(suggestion.end)
       );
     });
   };
@@ -211,7 +194,7 @@ function App() {
                       <button
                         type="button"
                         className="apply-suggestion"
-                        onClick={() => applyStyleSuggestion(suggestion)}
+                        onClick={() => applySuggestion(suggestion)}
                       >
                         Accept
                       </button>

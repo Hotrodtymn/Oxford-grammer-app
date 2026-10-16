@@ -185,6 +185,28 @@ test("all issue positions match the original text", () => {
   }
 });
 
+test("checks a mixed passage without flagging valid confused-word uses", () => {
+  const text =
+    "Their proposal arrived yesterday, but they was waiting. We recieved the updated file. The dog wagged its tail, then settled down. Their team is ready, and you're welcome to review your copy.";
+  const issues = checkWriting(text);
+
+  assert.deepEqual(
+    issues.map(({ original, suggestion, type }) => ({ original, suggestion, type })),
+    [
+      { original: "they was", suggestion: "they were", type: "grammar" },
+      { original: "recieved", suggestion: "received", type: "spelling" },
+    ],
+  );
+  for (const issue of issues) {
+    assert.equal(text.slice(issue.start, issue.end), issue.original);
+  }
+
+  assert.equal(issues.some((issue) => issue.original === "Their proposal"), false);
+  assert.equal(issues.some((issue) => issue.original === "its tail"), false);
+  assert.equal(issues.some((issue) => issue.original.toLowerCase().includes("then")), false);
+  assert.equal(issues.some((issue) => issue.original === "your copy"), false);
+});
+
 test("recomputes accurate issue offsets after applying a suggestion", () => {
   const original = "She go home. I recieved teh letter.";
   const firstIssue = findIssue(original, "She go");
@@ -298,6 +320,16 @@ test("corrects then in selected comparison phrases", () => {
   );
 });
 
+test("corrects then after clear comparatives", () => {
+  for (const [text, original, suggestion] of [
+    ["It is bigger then mine.", "bigger then", "bigger than"],
+    ["This shelf is higher then his.", "higher then", "higher than"],
+    ["This route is shorter then the other one.", "shorter then", "shorter than"],
+  ]) {
+    assert.equal(findIssue(text, original).suggestion, suggestion);
+  }
+});
+
 test("does not flag valid possessive its or temporal then", () => {
   const text =
     "The dog chased its ball, then rested. The device uses its definitely readable display. It is better than nothing.";
@@ -308,6 +340,14 @@ test("does not flag valid possessive its or temporal then", () => {
   );
   assert.equal(
     issues.some((issue) => /\bthen\b/i.test(issue.original)),
+    false,
+  );
+});
+
+test("does not change then used to describe the next event", () => {
+  const text = "We ate dinner, then watched a movie.";
+  assert.equal(
+    checkWriting(text).some((issue) => /\bthen\b/i.test(issue.original)),
     false,
   );
 });

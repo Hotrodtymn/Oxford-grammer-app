@@ -281,6 +281,12 @@ const grammarRules: Rule[] = [
     suggestion: (match) => `it's ${match[1]} ${match[2]}`,
   },
   {
+    pattern:
+      /\b(bigger|smaller|higher|lower|shorter|longer|taller|faster|slower|older|younger|stronger|weaker|larger|wider|narrower|closer|farther|further|better|worse)\s+then(?=\s+(?:mine|yours|his|hers|ours|theirs|the|a|an|this|that|these|those|my|your|her|our|their)\b)/gi,
+    message: 'Use "than" to compare these things.',
+    suggestion: (match) => `${match[1]} than`,
+  },
+  {
     pattern: /\b(rather|other|no sooner)\s+then\b/gi,
     message: 'Use "than" in this comparison or fixed phrase.',
     suggestion: (match) => `${match[1]} than`,
